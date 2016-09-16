@@ -66,18 +66,29 @@ class SiteController extends Controller
     /**
      * Login action.
      *
+     * @param null|string $hash
      * @return string
      */
-    public function actionLogin()
+    public function actionLogin($hash=null)
     {
         if (!Yii::$app->user->isGuest) {
             return $this->goHome();
         }
-
         $model = new LoginForm();
-        if ($model->load(Yii::$app->request->post()) && $model->login()) {
-            return $this->goBack();
+        if ($hash) {
+            $model->setScenario(LoginForm::SCENARIO_LOGIN);
+            $model->hash = $hash;
+            if ($model->login()) {
+                Yii::$app->session->addFlash('success', $model->getIsNewUser() ? 'Вы успешно зарегистрировались.' : 'Вы успешно авторизировались.');
+                return $this->redirect(['index']);
+            }
+        } else {
+            if ($model->load(Yii::$app->request->post()) && $model->send()) {
+                Yii::$app->session->addFlash('success', 'Проверьте вашу электронную почту для получения дальнейших инструкций.');
+                return $this->refresh();
+            }
         }
+
         return $this->render('login', [
             'model' => $model,
         ]);
@@ -93,33 +104,5 @@ class SiteController extends Controller
         Yii::$app->user->logout();
 
         return $this->goHome();
-    }
-
-    /**
-     * Displays contact page.
-     *
-     * @return string
-     */
-    public function actionContact()
-    {
-        $model = new ContactForm();
-        if ($model->load(Yii::$app->request->post()) && $model->contact(Yii::$app->params['adminEmail'])) {
-            Yii::$app->session->setFlash('contactFormSubmitted');
-
-            return $this->refresh();
-        }
-        return $this->render('contact', [
-            'model' => $model,
-        ]);
-    }
-
-    /**
-     * Displays about page.
-     *
-     * @return string
-     */
-    public function actionAbout()
-    {
-        return $this->render('about');
     }
 }
