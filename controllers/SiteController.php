@@ -81,6 +81,9 @@ class SiteController extends Controller
             if ($model->login()) {
                 Yii::$app->session->addFlash('success', $model->getIsNewUser() ? 'Вы успешно зарегистрировались.' : 'Вы успешно авторизировались.');
                 return $this->redirect(['index']);
+            } else {
+                Yii::$app->session->addFlash('error', 'Произошла ошибка.');
+                return $this->redirect('login');
             }
         } else {
             if ($model->load(Yii::$app->request->post()) && $model->send()) {
